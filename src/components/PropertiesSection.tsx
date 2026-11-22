@@ -88,7 +88,7 @@ export const PropertiesSection: React.FC<PropertiesSectionProps> = ({
     <section
       id="properties"
       aria-labelledby="properties-heading"
-      className="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 pt-16 pb-12 scroll-mt-20"
+      className="relative z-20 max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-12 scroll-mt-0"
     >
       {/* Unified Title Header & Attached Carousel */}
       <div className="scroll-reveal group border border-[#383838] bg-[#141414]/88 backdrop-blur-[2px] overflow-hidden">

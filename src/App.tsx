@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import { HomeHeader } from './components/HomeHeader';
 import { FullscreenHeroStage } from './components/FullscreenHeroStage';
 import { PropertiesSection } from './components/PropertiesSection';
@@ -34,7 +34,21 @@ export default function App() {
   const introLogoPRef = useRef<number>(0);
   const introTextPRef = useRef<number>(0);
 
+  const heroDismissedRef = useRef<boolean>(false);
+  const enteringRef = useRef<boolean>(false);
+  const returningTopRef = useRef<boolean>(false);
+  const contentLockPendingRef = useRef<boolean>(false);
+  const dismissDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const returnFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const applyVisualStateRef = useRef<(() => void) | null>(null);
+  const updateBrandMetricsRef = useRef<(() => void) | null>(null);
+  const cancelEnterRef = useRef<(() => void) | null>(null);
+  const pendingDismissRef = useRef<{ prevScrollY: number; heroHeight: number } | null>(null);
+  const pendingRestoreRef = useRef<{ prevScrollY: number; smooth: boolean } | null>(null);
+
   const [headerVisible, setHeaderVisible] = useState(false);
+  const [heroDismissed, setHeroDismissed] = useState(false);
   const [scrambleTrigger, setScrambleTrigger] = useState(0);
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>(
     CONFUSED_PROPERTIES[0].id
@@ -61,6 +75,33 @@ export default function App() {
     const prefersReducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    const clearReturnGuard = () => {
+      returningTopRef.current = false;
+      if (returnFallbackTimerRef.current !== null) {
+        clearTimeout(returnFallbackTimerRef.current);
+        returnFallbackTimerRef.current = null;
+      }
+    };
+
+    const dismissHeroFromScroll = (clampToTop: boolean) => {
+      if (heroDismissedRef.current || returningTopRef.current || enteringRef.current) return;
+      const heroHeight = heroStageRef.current?.offsetHeight || window.innerHeight || 0;
+      if (heroHeight <= 0) return;
+
+      contentLockPendingRef.current = false;
+      if (dismissDebounceTimerRef.current !== null) {
+        clearTimeout(dismissDebounceTimerRef.current);
+        dismissDebounceTimerRef.current = null;
+      }
+
+      pendingDismissRef.current = {
+        prevScrollY: clampToTop ? heroHeight : window.scrollY,
+        heroHeight,
+      };
+      heroDismissedRef.current = true;
+      setHeroDismissed(true);
+    };
 
     const updateBrandMetrics = () => {
       const rootEl = rootRef.current;
@@ -89,6 +130,22 @@ export default function App() {
 
     const applyVisualState = () => {
       const rootEl = rootRef.current;
+
+      if (heroDismissedRef.current) {
+        if (rootEl) {
+          rootEl.style.setProperty('--logo-p', '1.0000');
+          rootEl.style.setProperty('--text-in-p', '1.0000');
+          rootEl.style.setProperty('--dock-p', '1.0000');
+          rootEl.style.setProperty('--wordmark-opacity', '0.0000');
+          rootEl.style.setProperty('--scroll-cue-p', '1.0000');
+        }
+        if (!lastVisible) {
+          lastVisible = true;
+          setHeaderVisible(true);
+        }
+        return;
+      }
+
       const viewportH = window.innerHeight || 1;
 
       // Transfer 0xCONFUSED to header across the scroll from title page (0) to content (~62vh)
@@ -146,12 +203,65 @@ export default function App() {
       }
     };
 
+    updateBrandMetricsRef.current = updateBrandMetrics;
+    applyVisualStateRef.current = applyVisualState;
+
     const onScroll = () => {
+      if (returningTopRef.current) {
+        if (window.scrollY <= 4) {
+          clearReturnGuard();
+        }
+      } else if (!heroDismissedRef.current && !enteringRef.current) {
+        const heroHeight = heroStageRef.current?.offsetHeight || window.innerHeight || 0;
+        if (heroHeight > 0 && window.scrollY >= heroHeight - 2) {
+          contentLockPendingRef.current = true;
+          if (dismissDebounceTimerRef.current !== null) {
+            clearTimeout(dismissDebounceTimerRef.current);
+          }
+          dismissDebounceTimerRef.current = setTimeout(() => {
+            dismissDebounceTimerRef.current = null;
+            if (
+              contentLockPendingRef.current &&
+              !heroDismissedRef.current &&
+              !returningTopRef.current &&
+              !enteringRef.current &&
+              window.scrollY >= heroHeight - 2
+            ) {
+              dismissHeroFromScroll(false);
+            }
+          }, 120);
+        } else if (contentLockPendingRef.current && heroHeight > 0 && window.scrollY < heroHeight - 2) {
+          dismissHeroFromScroll(true);
+        }
+      }
+
       if (scrollRafId === null) {
         scrollRafId = window.requestAnimationFrame(() => {
           scrollRafId = null;
           applyVisualState();
         });
+      }
+    };
+
+    const onScrollEnd = () => {
+      applyVisualState();
+      if (returningTopRef.current) {
+        if (window.scrollY <= 4) {
+          clearReturnGuard();
+        }
+        return;
+      }
+      if (contentLockPendingRef.current && !heroDismissedRef.current && !enteringRef.current) {
+        const heroHeight = heroStageRef.current?.offsetHeight || window.innerHeight || 0;
+        if (heroHeight > 0 && window.scrollY >= heroHeight - 2) {
+          dismissHeroFromScroll(false);
+        }
+      }
+    };
+
+    const onWheelPassive = (event: WheelEvent) => {
+      if (returningTopRef.current && event.deltaY > 0) {
+        clearReturnGuard();
       }
     };
 
@@ -170,7 +280,7 @@ export default function App() {
     const runIntroFrame = (now: number) => {
       const elapsed = now - startTime;
 
-      if (prefersReducedMotion || window.scrollY > 120) {
+      if (prefersReducedMotion || heroDismissedRef.current || window.scrollY > 120) {
         introLogoPRef.current = 1;
         introTextPRef.current = 1;
         applyVisualState();
@@ -204,24 +314,64 @@ export default function App() {
     }
 
     const onLoad = () => {
-      resetScrollToTop();
+      if (!heroDismissedRef.current) {
+        resetScrollToTop();
+      }
       applyVisualState();
     };
 
     window.addEventListener('load', onLoad);
     window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('scrollend', applyVisualState, { passive: true });
+    window.addEventListener('scrollend', onScrollEnd, { passive: true });
+    window.addEventListener('wheel', onWheelPassive, { passive: true });
     window.addEventListener('resize', onResize, { passive: true });
 
     return () => {
       if (scrollRafId !== null) window.cancelAnimationFrame(scrollRafId);
       if (introRafId !== null) window.cancelAnimationFrame(introRafId);
+      if (dismissDebounceTimerRef.current !== null) {
+        clearTimeout(dismissDebounceTimerRef.current);
+      }
+      clearReturnGuard();
+      cancelEnterRef.current?.();
       window.removeEventListener('load', onLoad);
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('scrollend', applyVisualState);
+      window.removeEventListener('scrollend', onScrollEnd);
+      window.removeEventListener('wheel', onWheelPassive);
       window.removeEventListener('resize', onResize);
     };
   }, []);
+
+  useLayoutEffect(() => {
+    heroDismissedRef.current = heroDismissed;
+
+    if (heroDismissed && pendingDismissRef.current) {
+      const { prevScrollY, heroHeight } = pendingDismissRef.current;
+      pendingDismissRef.current = null;
+      const nextScrollY = Math.max(0, prevScrollY - heroHeight);
+      window.scrollTo({ top: nextScrollY, left: 0, behavior: 'auto' });
+      applyVisualStateRef.current?.();
+      return;
+    }
+
+    if (!heroDismissed && pendingRestoreRef.current) {
+      const { prevScrollY, smooth } = pendingRestoreRef.current;
+      pendingRestoreRef.current = null;
+      if (!smooth) {
+        window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        updateBrandMetricsRef.current?.();
+        applyVisualStateRef.current?.();
+        return;
+      }
+      const heroHeight = heroStageRef.current?.offsetHeight || window.innerHeight || 0;
+      window.scrollTo({ top: prevScrollY + heroHeight, left: 0, behavior: 'auto' });
+      updateBrandMetricsRef.current?.();
+      applyVisualStateRef.current?.();
+      window.requestAnimationFrame(() => {
+        window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+      });
+    }
+  }, [heroDismissed]);
 
   useEffect(() => {
     const elements = Array.from(document.querySelectorAll('.scroll-reveal'));
@@ -256,19 +406,151 @@ export default function App() {
   }, []);
 
   const handleEnterContent = useCallback(() => {
-    const target = document.getElementById('properties');
-    if (target) {
-      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (heroDismissedRef.current) return;
+
+    cancelEnterRef.current?.();
+    returningTopRef.current = false;
+    contentLockPendingRef.current = false;
+    if (dismissDebounceTimerRef.current !== null) {
+      clearTimeout(dismissDebounceTimerRef.current);
+      dismissDebounceTimerRef.current = null;
     }
+    if (returnFallbackTimerRef.current !== null) {
+      clearTimeout(returnFallbackTimerRef.current);
+      returnFallbackTimerRef.current = null;
+    }
+
+    const heroHeight = heroStageRef.current?.offsetHeight || window.innerHeight || 0;
+    const maxScrollable = Math.max(
+      0,
+      document.documentElement.scrollHeight - (window.innerHeight || 0)
+    );
+    const targetTop = Math.min(heroHeight, maxScrollable);
+
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReducedMotion || targetTop <= 0) {
+      pendingDismissRef.current = {
+        prevScrollY: window.scrollY,
+        heroHeight,
+      };
+      heroDismissedRef.current = true;
+      setHeroDismissed(true);
+      return;
+    }
+
+    enteringRef.current = true;
+    let finished = false;
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const cleanup = () => {
+      enteringRef.current = false;
+      if (fallbackTimer !== null) {
+        clearTimeout(fallbackTimer);
+        fallbackTimer = null;
+      }
+      window.removeEventListener('wheel', preventUpwardWheel);
+      window.removeEventListener('scroll', onEnterScroll);
+      window.removeEventListener('scrollend', completeEnter);
+      if (cancelEnterRef.current === cancel) {
+        cancelEnterRef.current = null;
+      }
+    };
+
+    const cancel = () => {
+      finished = true;
+      cleanup();
+    };
+
+    const completeEnter = () => {
+      if (finished) return;
+      finished = true;
+      cleanup();
+      const currentHeroHeight = heroStageRef.current?.offsetHeight || heroHeight;
+      pendingDismissRef.current = {
+        prevScrollY: window.scrollY,
+        heroHeight: currentHeroHeight,
+      };
+      heroDismissedRef.current = true;
+      setHeroDismissed(true);
+    };
+
+    const preventUpwardWheel = (event: WheelEvent) => {
+      if (event.deltaY < 0) {
+        event.preventDefault();
+      }
+    };
+
+    const onEnterScroll = () => {
+      if (window.scrollY >= targetTop - 2) {
+        completeEnter();
+      }
+    };
+
+    cancelEnterRef.current = cancel;
+    window.addEventListener('wheel', preventUpwardWheel, { passive: false });
+    window.addEventListener('scroll', onEnterScroll, { passive: true });
+    window.addEventListener('scrollend', completeEnter, { passive: true });
+    fallbackTimer = setTimeout(completeEnter, 900);
+
+    window.scrollTo({ top: targetTop, left: 0, behavior: 'smooth' });
   }, []);
 
   const handleScrollTop = useCallback(() => {
+    cancelEnterRef.current?.();
+    contentLockPendingRef.current = false;
+    if (dismissDebounceTimerRef.current !== null) {
+      clearTimeout(dismissDebounceTimerRef.current);
+      dismissDebounceTimerRef.current = null;
+    }
+
     const activeEl = document.activeElement;
     const headerEl = document.getElementById('home-header');
     if (activeEl instanceof HTMLElement && headerEl?.contains(activeEl)) {
       activeEl.blur();
     }
-    window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+    if (returnFallbackTimerRef.current !== null) {
+      clearTimeout(returnFallbackTimerRef.current);
+      returnFallbackTimerRef.current = null;
+    }
+
+    if (heroDismissedRef.current) {
+      returningTopRef.current = !prefersReducedMotion;
+      if (!prefersReducedMotion) {
+        returnFallbackTimerRef.current = setTimeout(() => {
+          returningTopRef.current = false;
+          returnFallbackTimerRef.current = null;
+        }, 1800);
+      }
+      pendingRestoreRef.current = {
+        prevScrollY: window.scrollY,
+        smooth: !prefersReducedMotion,
+      };
+      heroDismissedRef.current = false;
+      setHeroDismissed(false);
+      return;
+    }
+
+    if (!prefersReducedMotion && window.scrollY > 4) {
+      returningTopRef.current = true;
+      returnFallbackTimerRef.current = setTimeout(() => {
+        returningTopRef.current = false;
+        returnFallbackTimerRef.current = null;
+      }, 1800);
+    }
+
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+    });
   }, []);
 
   const handleSelectProperty = useCallback((property: ConfusedProperty) => {
@@ -292,11 +574,16 @@ export default function App() {
           floatingWordmarkRef={floatingWordmarkRef}
           scrambleTrigger={scrambleTrigger}
           headerVisible={headerVisible}
+          heroDismissed={heroDismissed}
           onEnterContent={handleEnterContent}
         />
 
         {/* Content sits directly below the 100vh title page */}
-        <div className="relative z-10 bg-transparent border-t border-[#2e2e2e]/60">
+        <div
+          className={`relative z-10 bg-transparent ${
+            heroDismissed ? '' : 'border-t border-[#2e2e2e]/60'
+          }`}
+        >
           <PropertiesSection selectedPropertyId={selectedPropertyId} />
 
           <RouteIndexSection
