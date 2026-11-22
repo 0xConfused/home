@@ -1,0 +1,561 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+
+@import "tailwindcss";
+
+:root {
+  --color-bg: #0d0d0d;
+  --color-surface: #141414;
+  --color-surface-raised: #262626;
+  --color-border: #383838;
+  --color-fg: #f0f0f0;
+  --color-fg-muted: #8c8c8c;
+  --color-accent: #c30800;
+  --color-accent-hover: #f60a00;
+  --color-accent-fg: #f3f3f7;
+  --color-secondary: #c300bb;
+  --color-success: #bbc300;
+  --color-warning: #c36a00;
+  --color-error: #c3005a;
+  --color-accent-tag-fg: #0c0c0f;
+  --color-secondary-tag-fg: #f3f3f7;
+  --color-success-tag-fg: #0c0c0f;
+  --color-warning-tag-fg: #0c0c0f;
+  --color-error-tag-fg: #0c0c0f;
+  --color-seed-01: #770500;
+  --color-seed-02: #6b665a;
+  --color-seed-03: #333333;
+  --topbar-height: 65px;
+  --gradient-accent: linear-gradient(135deg, #c30800 0%, #770500 100%);
+}
+
+.theme-dark {
+  --color-bg: #0d0d0d;
+  --color-surface: #1a1a1a;
+  --color-surface-raised: #262626;
+  --color-border: #383838;
+  --color-fg: #f0f0f0;
+  --color-fg-muted: #8c8c8c;
+  --color-accent: #c30800;
+  --color-accent-hover: #f60a00;
+  --color-accent-fg: #f3f3f7;
+  --color-secondary: #c300bb;
+  --color-success: #bbc300;
+  --color-warning: #c36a00;
+  --color-error: #c3005a;
+  --color-accent-tag-fg: #0c0c0f;
+  --color-secondary-tag-fg: #f3f3f7;
+  --color-success-tag-fg: #0c0c0f;
+  --color-warning-tag-fg: #0c0c0f;
+  --color-error-tag-fg: #0c0c0f;
+  --color-seed-01: #770500;
+  --color-seed-02: #6b665a;
+  --color-seed-03: #333333;
+}
+
+/* Glitch Goblin (v1.10) — Copyright 2023 GGBotNet — Licensed under SIL Open Font License 1.1 (./fonts/OFL.txt) */
+
+.font-glitch {
+  font-family: 'Glitch Goblin', 'Rubik Glitch', 'Chakra Petch', monospace;
+}
+
+@layer base {
+  html {
+    margin: 0;
+    padding: 0;
+    overflow-x: clip;
+    background-color: #0d0d0d;
+    scrollbar-width: thin;
+    scrollbar-color: #383838 #0d0d0d;
+  }
+  body {
+    margin: 0;
+    padding: 0;
+    overflow-x: clip;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #0d0d0d;
+    color: #f0f0f0;
+  }
+  code, pre, kbd, samp {
+    font-family: 'Fira Code', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #383838 #141414;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #141414;
+  border-radius: 0px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #383838;
+  border-radius: 0px;
+  border: 1px solid #2e2e2e;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #c30800;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #8c8c8c !important;
+  opacity: 1 !important;
+}
+
+/* 0xCONFUSED Topbar / Header Styles (matching resume.0xconfused.com) */
+header.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: rgba(13, 13, 13, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--color-border, #383838);
+}
+
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 20px;
+  min-height: 64px;
+  max-width: 80rem;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.brand-logo-slot {
+  position: relative;
+  height: 64px;
+  width: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+@keyframes scanline-roll {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 48px;
+  }
+}
+
+.brand-text-wrap {
+  position: relative;
+  z-index: 10;
+  min-width: 0;
+  padding: 4px 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.brand-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.brand-glitch-text {
+  font-family: 'Glitch Goblin', 'Rubik Glitch', 'Chakra Petch', monospace;
+  font-weight: 400;
+  font-size: 29px;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  color: var(--color-accent, #c30800);
+  cursor: pointer;
+  user-select: none;
+  margin: 0;
+  filter: drop-shadow(0 0 5px rgba(195, 8, 0, 0.35));
+}
+
+.brand-glitch-text .brand-title,
+.brand-scanline-title {
+  position: relative;
+  display: inline-block;
+  vertical-align: bottom;
+  color: var(--color-accent, #c30800);
+  padding: 6px 10px;
+  margin: -6px -10px;
+  text-shadow:
+    0 0 5px rgba(195, 8, 0, 0.55),
+    0 0 10px rgba(195, 8, 0, 0.35);
+  -webkit-mask-image: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 1) 0px,
+    rgba(0, 0, 0, 1) 2px,
+    rgba(0, 0, 0, 0.78) 2px,
+    rgba(0, 0, 0, 0.78) 3px
+  );
+  mask-image: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 1) 0px,
+    rgba(0, 0, 0, 1) 2px,
+    rgba(0, 0, 0, 0.78) 2px,
+    rgba(0, 0, 0, 0.78) 3px
+  );
+  -webkit-mask-size: 100% 48px;
+  mask-size: 100% 48px;
+  -webkit-mask-repeat: repeat-y;
+  mask-repeat: repeat-y;
+  animation: scanline-mask-roll 8s linear infinite;
+}
+
+@keyframes scanline-mask-roll {
+  0% {
+    -webkit-mask-position: 0 0;
+    mask-position: 0 0;
+  }
+  100% {
+    -webkit-mask-position: 0 48px;
+    mask-position: 0 48px;
+  }
+}
+
+.brand-mod {
+  font-family: 'Fira Code', monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-secondary, #c300bb);
+  letter-spacing: 0.04em;
+}
+
+/* 0xCONFUSED Unified Footer Styles */
+footer {
+  padding: 24px 0 28px;
+  border-top: 1px solid var(--border-secondary, #2e2e2e);
+  background: #090909;
+}
+
+.footer-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.footer-primary-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.footer-identity {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.footer-handle {
+  font-family: 'Glitch Goblin', var(--font-head, 'Plus Jakarta Sans'), 'Fira Code', monospace;
+  font-size: 13.5px;
+  letter-spacing: .08em;
+  color: var(--color-accent, #c30800);
+  font-weight: 400;
+  vertical-align: baseline;
+  transition: color 0.15s ease;
+  user-select: none;
+}
+
+.footer-handle:hover {
+  color: var(--color-accent-hover, #f60a00);
+}
+
+.footer-sep {
+  color: var(--border-primary, #383838);
+  user-select: none;
+}
+
+.footer-name {
+  color: var(--text-body, #d4d4d8);
+  font-weight: 600;
+}
+
+.footer-role {
+  color: var(--text-dim, #737373);
+  font-size: 11.5px;
+}
+
+.footer-links {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.footer-spec {
+  font-family: var(--font-mono, 'Fira Code', monospace);
+  color: var(--text-dim, #737373);
+  font-size: 11.5px;
+  letter-spacing: .04em;
+  padding-right: 4px;
+}
+
+.footer-links a {
+  font-family: var(--font-mono, 'Fira Code', monospace);
+  font-size: 11px;
+  color: var(--text-muted, #8c8c8c);
+  text-decoration: none;
+  transition: color .15s ease;
+  letter-spacing: .06em;
+  font-weight: 600;
+}
+
+.footer-links a:hover {
+  color: var(--color-accent-hover, #f60a00);
+}
+
+/* ==========================================================================
+   0xCONFUSED Homepage Fullscreen Hero -> Content Scroll Transitions
+   Compositor-only transforms & opacity, respecting prefers-reduced-motion
+   ========================================================================== */
+
+.hero-scroll-stage {
+  --logo-p: 0;
+  --text-in-p: 0;
+  --dock-p: 0;
+  --wordmark-opacity: 0;
+  --hero-s0: 0.68;
+  --brand-dx: -200px;
+  --brand-dy: -40vh;
+  --brand-scale: 0.36;
+}
+
+/* Act 1 -> Act 2: Centered fullscreen logo shifts right (+50vw), expands to 100vh, fades to 24% */
+.hero-bg-logo-transform {
+  transform: translate3d(calc(var(--logo-p, 0) * 50vw), 0, 0)
+    scale(
+      calc(
+        var(--hero-s0, 0.68) +
+          var(--logo-p, 0) * (1 - var(--hero-s0, 0.68))
+      )
+    );
+  opacity: calc(1 - var(--logo-p, 0) * 0.76);
+  will-change: transform, opacity;
+}
+
+/* Act 2 -> Act 3: 0xCONFUSED text fades in centered, then flies & scales directly into header slot */
+.hero-wordmark-transfer {
+  transform: translate3d(
+      calc(var(--dock-p, 0) * var(--brand-dx, -200px)),
+      calc(
+        (1 - var(--text-in-p, 0)) * 28px +
+          var(--dock-p, 0) * var(--brand-dy, -40vh)
+      ),
+      0
+    )
+    scale(
+      calc(
+        (0.92 + var(--text-in-p, 0) * 0.08) *
+          (1 - var(--dock-p, 0) * (1 - var(--brand-scale, 0.36)))
+      )
+    );
+  opacity: var(--wordmark-opacity, 0);
+  will-change: transform, opacity;
+}
+
+.hero-scroll-cue {
+  opacity: calc((1 - var(--scroll-cue-p, 0)) * var(--text-in-p, 0));
+  transform: translate3d(0, calc(var(--scroll-cue-p, 0) * 12px), 0);
+  will-change: transform, opacity;
+}
+
+/* Masked subtle CRT scanlines on fullscreen & header skull logo */
+.hero-logo-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Artifact-free mask-based scanlines for large scaled background skull (no edge fringing or moire) */
+.hero-logo-scanlines {
+  -webkit-mask-image: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 1) 0px,
+    rgba(0, 0, 0, 1) 3px,
+    rgba(0, 0, 0, 0.84) 3px,
+    rgba(0, 0, 0, 0.84) 4px
+  );
+  mask-image: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 1) 0px,
+    rgba(0, 0, 0, 1) 3px,
+    rgba(0, 0, 0, 0.84) 3px,
+    rgba(0, 0, 0, 0.84) 4px
+  );
+  -webkit-mask-size: 100% 48px;
+  mask-size: 100% 48px;
+  -webkit-mask-repeat: repeat-y;
+  mask-repeat: repeat-y;
+  animation: scanline-mask-roll 8s linear infinite;
+}
+
+.skull-scanline-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 1) 0px,
+    rgba(0, 0, 0, 1) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  background-size: 100% 48px;
+  background-repeat: repeat-y;
+  opacity: 0.12;
+  z-index: 2;
+  animation: scanline-roll 8s linear infinite;
+}
+
+.skull-sweep-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  overflow: hidden;
+}
+
+.skull-sweep-beam {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 16%;
+  top: -18%;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(195, 8, 0, 0.12) 50%,
+    transparent
+  );
+  opacity: 0;
+  animation: crt-sweep-pct 8s ease-in-out infinite;
+}
+
+@keyframes crt-sweep-pct {
+  0% {
+    transform: translateY(0%);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.12;
+  }
+  50% {
+    opacity: 0.12;
+  }
+  65% {
+    transform: translateY(720%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(720%);
+    opacity: 0;
+  }
+}
+
+/* Static hue-rotation strictly on hover for featured property cards & categories */
+.hover-accent-hue {
+  transition: filter 180ms cubic-bezier(0.16, 1, 0.3, 1), border-color 180ms cubic-bezier(0.16, 1, 0.3, 1), background-color 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.group:hover .hover-accent-hue,
+.hover-accent-hue:hover {
+  filter: hue-rotate(24deg) saturate(1.1);
+}
+
+/* Scroll-triggered section & card entrance (compositor-only) */
+.scroll-reveal {
+  opacity: 0;
+  transform: translate3d(0, 22px, 0);
+  transition: opacity 420ms cubic-bezier(0.16, 1, 0.3, 1), transform 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.scroll-reveal.is-visible {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+@keyframes carousel-segment-progress {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.carousel-segment-fill {
+  transform-origin: left center;
+  animation-name: carousel-segment-progress;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-bg-logo-transform {
+    transform: translate3d(50vw, 0, 0) scale(1) !important;
+    opacity: 0.24 !important;
+    will-change: auto;
+  }
+  .hero-wordmark-transfer {
+    will-change: auto;
+  }
+  .hero-scroll-cue {
+    opacity: 0.6 !important;
+    transform: none !important;
+    will-change: auto;
+  }
+  .scroll-reveal {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .carousel-segment-fill {
+    animation: none !important;
+    transform: scaleX(1) !important;
+  }
+  .hero-logo-scanlines,
+  .skull-scanline-layer,
+  .skull-sweep-beam,
+  .brand-glitch-text .brand-title,
+  .brand-scanline-title {
+    animation: none !important;
+  }
+}
+
+
+
+
