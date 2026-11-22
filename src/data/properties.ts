@@ -412,7 +412,7 @@ export const FAQ_ITEMS: FaqItem[] = [
     tag: 'ECOSYSTEM',
     question: 'What is 0xCONFUSED?',
     answer:
-      `0xCONFUSED is my username—a play on type confusion. I have been a cybersecurity researcher for over ${YEARS_AS_RESEARCHER} years and a detection engineer for over ${YEARS_AS_DETECTION_ENGINEER} ${YEARS_AS_DETECTION_ENGINEER === 1 ? 'year' : 'years'}. This site is a compilation of standalone projects I thought would be interesting to work on or that I found useful for threat triage.`,
+      `0xCONFUSED is my username, a play on type confusion (and occasionally how I feel trying to make sense of NVD writeups). After more than ${YEARS_AS_RESEARCHER} ${YEARS_AS_RESEARCHER === 1 ? 'year' : 'years'} in cybersecurity research and over ${YEARS_AS_DETECTION_ENGINEER} ${YEARS_AS_DETECTION_ENGINEER === 1 ? 'year' : 'years'} in detection engineering, I started collecting my standalone tools here. Some were built out of necessity for threat triage, and others just seemed fun to work on.`,
   },
   {
     index: '02',
