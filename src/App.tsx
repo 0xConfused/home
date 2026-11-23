@@ -584,7 +584,7 @@ export default function App() {
             heroDismissed ? '' : 'border-t border-[#2e2e2e]/60'
           }`}
         >
-          <PropertiesSection selectedPropertyId={selectedPropertyId} />
+          <PropertiesSection />
 
           <RouteIndexSection
             selectedPropertyId={selectedPropertyId}

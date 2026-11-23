@@ -90,8 +90,8 @@ export const HomeHeader: React.FC<HomeHeaderProps> = ({
           className="hidden md:flex items-center gap-6 font-mono text-[11px] font-bold uppercase tracking-[0.06em] text-[#8c8c8c]"
         >
           {[
-            { id: 'properties', label: 'Applications' },
-            { id: 'routes', label: 'Breakdown' },
+            { id: 'properties', label: 'Featured' },
+            { id: 'routes', label: 'Applications' },
             { id: 'faq', label: 'FAQ' },
             { id: 'resources', label: 'Resources' },
             { id: 'media', label: 'Media' },

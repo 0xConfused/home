@@ -39,7 +39,7 @@ export const RouteIndexSection: React.FC<RouteIndexSectionProps> = ({
               id="routes-heading"
               className="text-xl sm:text-2xl font-bold tracking-tight text-[#f0f0f0]"
             >
-              02. Technical Breakdown
+              02. Applications
             </h2>
           </div>
         </div>
@@ -93,26 +93,11 @@ export const RouteIndexSection: React.FC<RouteIndexSectionProps> = ({
           >
             <div>
               {/* Top Title & Direct Actions */}
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-5 border-b border-[#2e2e2e]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#2e2e2e]">
                 <div>
-                  <h3 className="text-xl font-bold text-[#f0f0f0] mb-1">
+                  <h3 className="text-xl font-bold text-[#f0f0f0]">
                     {activeSpec.title}
                   </h3>
-                  {activeSpec.comingSoon ? (
-                    <span className="inline-flex items-center font-mono text-xs text-[#8c8c8c]">
-                      {activeSpec.url}
-                    </span>
-                  ) : (
-                    <a
-                      href={activeSpec.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 font-mono text-xs text-[#c30800] hover:text-[#f60a00] hover:underline underline-offset-4"
-                    >
-                      <span>{activeSpec.url}</span>
-                      <ArrowUpRight className="w-3.5 h-3.5" />
-                    </a>
-                  )}
                 </div>
 
                 <div className="flex items-center gap-2 shrink-0">
