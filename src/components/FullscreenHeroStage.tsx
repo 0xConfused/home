@@ -10,6 +10,7 @@ interface FullscreenHeroStageProps {
   headerVisible: boolean;
   heroDismissed: boolean;
   onEnterContent: () => void;
+  onScrambleComplete?: () => void;
 }
 
 export const FullscreenHeroStage: React.FC<FullscreenHeroStageProps> = ({
@@ -19,6 +20,7 @@ export const FullscreenHeroStage: React.FC<FullscreenHeroStageProps> = ({
   headerVisible,
   heroDismissed,
   onEnterContent,
+  onScrambleComplete,
 }) => {
   const canInteractWordmark = !heroDismissed && !headerVisible;
 
@@ -91,6 +93,7 @@ export const FullscreenHeroStage: React.FC<FullscreenHeroStageProps> = ({
             triggerKey={scrambleTrigger}
             cooldownMs={5000}
             deferUntilTrigger
+            onScrambleComplete={onScrambleComplete}
             className="text-[clamp(2.5rem,7vw,5.25rem)] tracking-[0.14em] leading-none text-[#c30800] whitespace-nowrap drop-shadow-[0_0_16px_rgba(195,8,0,0.40)]"
             textClassName="inline-block"
           />

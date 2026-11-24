@@ -38,12 +38,18 @@ export default function App() {
   const enteringRef = useRef<boolean>(false);
   const returningTopRef = useRef<boolean>(false);
   const contentLockPendingRef = useRef<boolean>(false);
+  const initialTitleLockRef = useRef<boolean>(false);
+  const introFramesDoneRef = useRef<boolean>(false);
+  const scrambleDoneRef = useRef<boolean>(false);
+  const autoEnterScheduledRef = useRef<boolean>(false);
+  const autoEnterTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const dismissDebounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const returnFallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const applyVisualStateRef = useRef<(() => void) | null>(null);
   const updateBrandMetricsRef = useRef<(() => void) | null>(null);
   const cancelEnterRef = useRef<(() => void) | null>(null);
+  const enterContentRef = useRef<(() => void) | null>(null);
   const pendingDismissRef = useRef<{ prevScrollY: number; heroHeight: number } | null>(null);
   const pendingRestoreRef = useRef<{ prevScrollY: number; smooth: boolean } | null>(null);
 
@@ -54,13 +60,42 @@ export default function App() {
     CONFUSED_PROPERTIES[0].id
   );
 
+  const maybeScheduleAutoEnter = useCallback(() => {
+    if (
+      !initialTitleLockRef.current ||
+      heroDismissedRef.current ||
+      enteringRef.current ||
+      autoEnterScheduledRef.current ||
+      !introFramesDoneRef.current ||
+      !scrambleDoneRef.current
+    ) {
+      return;
+    }
+
+    autoEnterScheduledRef.current = true;
+    autoEnterTimerRef.current = setTimeout(() => {
+      autoEnterTimerRef.current = null;
+      if (initialTitleLockRef.current && !heroDismissedRef.current) {
+        enterContentRef.current?.();
+      }
+    }, 1000);
+  }, []);
+
   useEffect(() => {
+    const loadsToTitleCard =
+      typeof window !== 'undefined' &&
+      (!window.location.hash || window.location.hash === '#top');
+
+    if (loadsToTitleCard) {
+      initialTitleLockRef.current = true;
+    }
+
     const resetScrollToTop = () => {
       try {
         if ('scrollRestoration' in window.history) {
           window.history.scrollRestoration = 'manual';
         }
-        if (!window.location.hash || window.location.hash === '#top') {
+        if (loadsToTitleCard) {
           window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
         }
       } catch {}
@@ -207,7 +242,11 @@ export default function App() {
     applyVisualStateRef.current = applyVisualState;
 
     const onScroll = () => {
-      if (returningTopRef.current) {
+      if (initialTitleLockRef.current && !enteringRef.current && !heroDismissedRef.current) {
+        if (window.scrollY !== 0) {
+          window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        }
+      } else if (returningTopRef.current) {
         if (window.scrollY <= 4) {
           clearReturnGuard();
         }
@@ -245,6 +284,12 @@ export default function App() {
 
     const onScrollEnd = () => {
       applyVisualState();
+      if (initialTitleLockRef.current && !enteringRef.current && !heroDismissedRef.current) {
+        if (window.scrollY !== 0) {
+          window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+        }
+        return;
+      }
       if (returningTopRef.current) {
         if (window.scrollY <= 4) {
           clearReturnGuard();
@@ -259,10 +304,43 @@ export default function App() {
       }
     };
 
-    const onWheelPassive = (event: WheelEvent) => {
+    const onTitleLockWheel = (event: WheelEvent) => {
+      if (initialTitleLockRef.current && !heroDismissedRef.current) {
+        event.preventDefault();
+        return;
+      }
       if (returningTopRef.current && event.deltaY > 0) {
         clearReturnGuard();
       }
+    };
+
+    const onTitleLockTouchMove = (event: TouchEvent) => {
+      if (initialTitleLockRef.current && !heroDismissedRef.current) {
+        event.preventDefault();
+      }
+    };
+
+    const onTitleLockKeyDown = (event: KeyboardEvent) => {
+      if (!initialTitleLockRef.current || heroDismissedRef.current) return;
+
+      const blockedKeys = ['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '];
+      if (!blockedKeys.includes(event.key)) return;
+
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+
+      if (event.key === ' ' && target?.getAttribute('role') === 'button') {
+        return;
+      }
+
+      event.preventDefault();
     };
 
     const onResize = () => {
@@ -285,6 +363,8 @@ export default function App() {
         introTextPRef.current = 1;
         applyVisualState();
         introRafId = null;
+        introFramesDoneRef.current = true;
+        maybeScheduleAutoEnter();
         return;
       }
 
@@ -299,6 +379,8 @@ export default function App() {
         introTextPRef.current = 1;
         applyVisualState();
         introRafId = null;
+        introFramesDoneRef.current = true;
+        maybeScheduleAutoEnter();
       }
     };
 
@@ -314,7 +396,7 @@ export default function App() {
     }
 
     const onLoad = () => {
-      if (!heroDismissedRef.current) {
+      if (!heroDismissedRef.current && !enteringRef.current) {
         resetScrollToTop();
       }
       applyVisualState();
@@ -323,7 +405,9 @@ export default function App() {
     window.addEventListener('load', onLoad);
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('scrollend', onScrollEnd, { passive: true });
-    window.addEventListener('wheel', onWheelPassive, { passive: true });
+    window.addEventListener('wheel', onTitleLockWheel, { passive: false });
+    window.addEventListener('touchmove', onTitleLockTouchMove, { passive: false });
+    window.addEventListener('keydown', onTitleLockKeyDown);
     window.addEventListener('resize', onResize, { passive: true });
 
     return () => {
@@ -332,15 +416,22 @@ export default function App() {
       if (dismissDebounceTimerRef.current !== null) {
         clearTimeout(dismissDebounceTimerRef.current);
       }
+      if (autoEnterTimerRef.current !== null) {
+        clearTimeout(autoEnterTimerRef.current);
+        autoEnterTimerRef.current = null;
+      }
+      autoEnterScheduledRef.current = false;
       clearReturnGuard();
       cancelEnterRef.current?.();
       window.removeEventListener('load', onLoad);
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('scrollend', onScrollEnd);
-      window.removeEventListener('wheel', onWheelPassive);
+      window.removeEventListener('wheel', onTitleLockWheel);
+      window.removeEventListener('touchmove', onTitleLockTouchMove);
+      window.removeEventListener('keydown', onTitleLockKeyDown);
       window.removeEventListener('resize', onResize);
     };
-  }, []);
+  }, [maybeScheduleAutoEnter]);
 
   useLayoutEffect(() => {
     heroDismissedRef.current = heroDismissed;
@@ -408,6 +499,11 @@ export default function App() {
   const handleEnterContent = useCallback(() => {
     if (heroDismissedRef.current) return;
 
+    if (autoEnterTimerRef.current !== null) {
+      clearTimeout(autoEnterTimerRef.current);
+      autoEnterTimerRef.current = null;
+    }
+
     cancelEnterRef.current?.();
     returningTopRef.current = false;
     contentLockPendingRef.current = false;
@@ -432,6 +528,7 @@ export default function App() {
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
     if (prefersReducedMotion || targetTop <= 0) {
+      initialTitleLockRef.current = false;
       pendingDismissRef.current = {
         prevScrollY: window.scrollY,
         heroHeight,
@@ -468,6 +565,7 @@ export default function App() {
       if (finished) return;
       finished = true;
       cleanup();
+      initialTitleLockRef.current = false;
       const currentHeroHeight = heroStageRef.current?.offsetHeight || heroHeight;
       pendingDismissRef.current = {
         prevScrollY: window.scrollY,
@@ -498,8 +596,20 @@ export default function App() {
     window.scrollTo({ top: targetTop, left: 0, behavior: 'smooth' });
   }, []);
 
+  enterContentRef.current = handleEnterContent;
+
+  const handleHeroScrambleComplete = useCallback(() => {
+    scrambleDoneRef.current = true;
+    maybeScheduleAutoEnter();
+  }, [maybeScheduleAutoEnter]);
+
   const handleScrollTop = useCallback(() => {
     cancelEnterRef.current?.();
+    initialTitleLockRef.current = false;
+    if (autoEnterTimerRef.current !== null) {
+      clearTimeout(autoEnterTimerRef.current);
+      autoEnterTimerRef.current = null;
+    }
     contentLockPendingRef.current = false;
     if (dismissDebounceTimerRef.current !== null) {
       clearTimeout(dismissDebounceTimerRef.current);
@@ -576,6 +686,7 @@ export default function App() {
           headerVisible={headerVisible}
           heroDismissed={heroDismissed}
           onEnterContent={handleEnterContent}
+          onScrambleComplete={handleHeroScrambleComplete}
         />
 
         {/* Content sits directly below the 100vh title page */}

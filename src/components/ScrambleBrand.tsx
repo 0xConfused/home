@@ -13,6 +13,7 @@ interface ScrambleBrandProps {
   triggerKey?: number;
   cooldownMs?: number;
   deferUntilTrigger?: boolean;
+  onScrambleComplete?: () => void;
 }
 
 export const ScrambleBrand: React.FC<ScrambleBrandProps> = ({
@@ -23,10 +24,16 @@ export const ScrambleBrand: React.FC<ScrambleBrandProps> = ({
   triggerKey = 0,
   cooldownMs = 2000,
   deferUntilTrigger = false,
+  onScrambleComplete,
 }) => {
   const [scrambleText, setScrambleText] = useState<string>(BRAND_NAME);
   const lastScrambleAtRef = useRef<number>(0);
   const scrambleIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const onScrambleCompleteRef = useRef<(() => void) | undefined>(onScrambleComplete);
+
+  useEffect(() => {
+    onScrambleCompleteRef.current = onScrambleComplete;
+  }, [onScrambleComplete]);
 
   const runScramble = useCallback(() => {
     if (
@@ -34,6 +41,7 @@ export const ScrambleBrand: React.FC<ScrambleBrandProps> = ({
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     ) {
       setScrambleText(BRAND_NAME);
+      onScrambleCompleteRef.current?.();
       return;
     }
 
@@ -60,6 +68,7 @@ export const ScrambleBrand: React.FC<ScrambleBrandProps> = ({
           scrambleIntervalRef.current = null;
         }
         setScrambleText(BRAND_NAME);
+        onScrambleCompleteRef.current?.();
       }
       iteration += 1 / 3;
     }, 30);
